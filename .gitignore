@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Data files (contain downloaded/processed data)
+data/temp_audio/
+data/properties/
+data/index.json
+data/index.csv
+data/processed_videos.json
+data/run_history.json
+data/.lock
+
+# Logs
+logs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Environment
+.env
+.env.local
+config.local.json

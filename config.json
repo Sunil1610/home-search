@@ -1,0 +1,44 @@
+{
+  "search": {
+    "locations": ["LB Nagar"],
+    "active_location": "LB Nagar",
+    "query_templates": [
+      "independent house for sale {location}",
+      "individual house {location}",
+      "house for sale {location} Hyderabad"
+    ],
+    "max_videos_per_search": 50,
+    "sort_by": "relevance",
+    "upload_date_filter": "this_year"
+  },
+  "extraction": {
+    "primary_language": "te",
+    "languages": ["te", "hi", "en"],
+    "whisper_model": "medium"
+  },
+  "llm": {
+    "provider": "ollama",
+    "model": "qwen2.5:7b",
+    "base_url": "http://localhost:11434"
+  },
+  "output": {
+    "properties_dir": "./data/properties",
+    "index_file": "./data/index.json",
+    "csv_file": "./data/index.csv",
+    "processed_videos_file": "./data/processed_videos.json"
+  },
+  "scheduling": {
+    "enabled": true,
+    "cron_time": "0 0 * * *",
+    "lock_file": "./data/.lock",
+    "skip_if_ran_today": true
+  },
+  "rate_limits": {
+    "delay_between_videos_ms": 2000,
+    "max_retries": 3
+  },
+  "paths": {
+    "audio_temp_dir": "./data/temp_audio",
+    "logs_dir": "./logs"
+  }
+}
