@@ -7,6 +7,8 @@ Search YouTube for real estate videos, transcribe, extract property data.
 import json
 import os
 import sys
+import time
+import random
 from pathlib import Path
 from typing import Optional
 
@@ -210,6 +212,12 @@ def search(location: str, max_videos: int, skip_processed: bool):
     fail_count = 0
 
     for i, video in enumerate(videos, 1):
+        # Add delay between videos to avoid rate limiting (except for first video)
+        if i > 1:
+            delay = random.uniform(15, 30)
+            console.print(f"\n[dim]Waiting {delay:.0f}s before next video to avoid rate limiting...[/dim]")
+            time.sleep(delay)
+
         console.print(f"\n[bold]━━━ Video {i}/{len(videos)} ━━━[/bold]")
         console.print(f"[blue]{video.title}[/blue]")
 
