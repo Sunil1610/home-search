@@ -56,6 +56,39 @@ def load_config() -> dict:
     return DEFAULT_CONFIG
 
 
+def is_garbage_transcript(text: str) -> bool:
+    """
+    Detect if a transcript is garbage (Whisper hallucination).
+    Returns True if the transcript appears to be repetitive nonsense.
+    """
+    if not text or len(text) < 50:
+        return True
+
+    # Check for repetitive patterns
+    words = text.split()
+    if len(words) < 10:
+        return True
+
+    # Count unique words vs total words
+    unique_words = set(words)
+    uniqueness_ratio = len(unique_words) / len(words)
+
+    # If less than 20% unique words, it's probably garbage
+    if uniqueness_ratio < 0.2:
+        return True
+
+    # Check for specific hallucination patterns
+    hallucination_patterns = [
+        "పాపరిటి", "మాలికి", "కికికి", "టిటిటి",
+        "ististist", "alalal", "inging"
+    ]
+    for pattern in hallucination_patterns:
+        if pattern in text.lower():
+            return True
+
+    return False
+
+
 def process_single_video(
     video_url: str,
     location: str = "",
@@ -87,6 +120,12 @@ def process_single_video(
         console.print(f"[yellow]Video already processed. Use --force to reprocess.[/yellow]")
         return True
 
+    # Skip very short videos (likely just music/intro)
+    if video_info.duration_seconds < 30:
+        console.print(f"[yellow]Skipping very short video (<30s)[/yellow]")
+        mark_video_processed(video_id, success=False, location=location)
+        return False
+
     # Download audio
     console.print(f"\n[cyan]Downloading audio...[/cyan]")
     download_result = download_audio(video_url, video_id=video_id)
@@ -109,17 +148,34 @@ def process_single_video(
             model_name=config.get("whisper_model", "medium")
         )
 
-        if not transcript_result.success:
-            console.print(f"[red]Transcription failed:[/red] {transcript_result.error}")
-            mark_video_processed(video_id, success=False, location=location)
-            return False
+        transcript_text = ""
+        if transcript_result.success:
+            transcript_text = transcript_result.full_text
+            console.print(f"[green]Transcription complete:[/green] {len(transcript_text)} chars")
 
-        console.print(f"[green]Transcription complete:[/green] {len(transcript_result.full_text)} chars")
+            # Check if transcript is garbage
+            if is_garbage_transcript(transcript_text):
+                console.print(f"[yellow]Transcript appears to be low quality (Whisper hallucination)[/yellow]")
+                transcript_text = ""  # Don't use garbage transcript
+
+        # Build combined text from description + title + transcript
+        # Video description often has more reliable info than audio
+        combined_text = f"""
+VIDEO TITLE: {video_info.title}
+
+VIDEO DESCRIPTION:
+{video_info.description or 'No description'}
+
+TRANSCRIPT:
+{transcript_text if transcript_text else 'No usable transcript available'}
+"""
+
+        console.print(f"[cyan]Using description + title + transcript for extraction[/cyan]")
 
         # Extract property data
         console.print(f"\n[cyan]Extracting property data...[/cyan]")
         extraction_result = extract_property_data(
-            transcript_result.full_text,
+            combined_text,
             video_id=video_id,
             model=config.get("llm_model", "qwen2.5:7b")
         )
@@ -131,10 +187,12 @@ def process_single_video(
 
         # Save property
         console.print(f"\n[cyan]Saving property data...[/cyan]")
+        # Use combined text for summary (prefer description if transcript is garbage)
+        summary_text = video_info.description or transcript_text or video_info.title
         filepath = save_property(
             video_info=video_info,
             property_data=extraction_result.property_data,
-            transcript_summary=transcript_result.full_text[:500],
+            transcript_summary=summary_text[:500] if summary_text else "",
             search_location=location
         )
 
