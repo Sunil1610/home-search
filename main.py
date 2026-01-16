@@ -630,5 +630,17 @@ def schedule_run(location: str, max_videos: int, force: bool):
         console.print(f"\n[red]✗ Scheduled job failed[/red]")
 
 
+@cli.command()
+def dashboard():
+    """Launch the Streamlit dashboard."""
+    import subprocess
+
+    console.print(f"\n[bold cyan]Launching Dashboard...[/bold cyan]")
+    console.print(f"Opening in browser at http://localhost:8501")
+    console.print(f"[dim]Press Ctrl+C to stop[/dim]\n")
+
+    subprocess.run(["streamlit", "run", "dashboard.py"])
+
+
 if __name__ == "__main__":
     cli()
