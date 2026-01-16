@@ -631,15 +631,35 @@ def schedule_run(location: str, max_videos: int, force: bool):
 
 
 @cli.command()
-def dashboard():
+@click.option("--port", "-p", default=8501, help="Port to run on")
+def dashboard(port: int):
     """Launch the Streamlit dashboard."""
     import subprocess
+    import webbrowser
 
     console.print(f"\n[bold cyan]Launching Dashboard...[/bold cyan]")
-    console.print(f"Opening in browser at http://localhost:8501")
+    console.print(f"Opening in browser at http://localhost:{port}")
     console.print(f"[dim]Press Ctrl+C to stop[/dim]\n")
 
-    subprocess.run(["streamlit", "run", "dashboard.py"])
+    # Get streamlit path
+    streamlit_path = Path.home() / "Library" / "Python" / "3.9" / "bin" / "streamlit"
+    if not streamlit_path.exists():
+        streamlit_path = "streamlit"  # Try system PATH
+
+    # Open browser after a short delay
+    import threading
+    def open_browser():
+        import time
+        time.sleep(2)
+        webbrowser.open(f"http://localhost:{port}")
+
+    threading.Thread(target=open_browser, daemon=True).start()
+
+    subprocess.run([
+        str(streamlit_path), "run", "dashboard.py",
+        "--server.port", str(port),
+        "--server.headless", "false"
+    ])
 
 
 if __name__ == "__main__":

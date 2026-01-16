@@ -9,6 +9,10 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
+import os
+
+# Change to script directory
+os.chdir(Path(__file__).parent)
 
 # Page config
 st.set_page_config(
@@ -29,6 +33,7 @@ def load_properties():
     properties = []
 
     if not properties_dir.exists():
+        st.error(f"Properties directory not found: {properties_dir.absolute()}")
         return pd.DataFrame()
 
     for filepath in properties_dir.glob("*.json"):
